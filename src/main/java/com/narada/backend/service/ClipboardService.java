@@ -1,10 +1,14 @@
 package com.narada.backend.service;
 
+import com.narada.backend.dTO.ClipboardRequestDTO;
+import com.narada.backend.dTO.ClipboardResponseDTO;
 import com.narada.backend.model.ClipboardItem;
 import com.narada.backend.model.Session;
 import com.narada.backend.repository.ClipboardRepository;
 import com.narada.backend.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,15 +16,23 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ClipboardService {
     private final ClipboardRepository repository;
     private final SessionRepository sessionRepository;
 
     @Transactional
-    public ClipboardItem save(ClipboardItem item) {
+    public ClipboardResponseDTO save(ClipboardRequestDTO request) {
+        ClipboardItem item = new ClipboardItem();
+        item.setContent(request.getContent());
+        item.setSessionId(request.getSessionId());
+        item.setDeviceId(request.getDeviceId());
+        item.setType(request.getType());
+
         Session session = sessionRepository.findById(item.getSessionId())
                 .orElseThrow(() -> new IllegalArgumentException("Session not found."));
 
@@ -34,14 +46,30 @@ public class ClipboardService {
             sessionRepository.save(session);
         }
 
-        return repository.save(item);
+        repository.save(item);
+
+        return ClipboardResponseDTO.builder()
+            .sessionId(item.getSessionId())
+            .content(item.getContent())
+            .deviceId(item.getDeviceId())
+            .createdAt(item.getCreatedAt())
+            .build();
     }
 
-    public List<ClipboardItem> getBySession(String sessionId) {
+    public List<ClipboardResponseDTO> getBySession(String sessionId) {
         if (!sessionRepository.existsById(sessionId)) {
             throw new IllegalArgumentException("Session not found.");
         }
-        return repository.findBySessionIdOrderByCreatedAtDesc(sessionId);
+
+        List<ClipboardItem> items = repository.findBySessionIdOrderByCreatedAtDesc(sessionId);
+        return items.stream()
+        .map(item -> ClipboardResponseDTO.builder()
+                .sessionId(item.getSessionId())
+                .content(item.getContent())
+                .deviceId(item.getDeviceId())
+                .createdAt(item.getCreatedAt())
+                .build())
+        .collect(Collectors.toList());
     }
 
     @Scheduled(fixedRate = 3600000)
@@ -59,7 +87,7 @@ public class ClipboardService {
         }
 
         if (!expiredSessions.isEmpty()) {
-            System.out.println("TEST CLEANUP: Successfully removed " + expiredSessions.size() + " expired test sessions.");
+            log.info("TEST CLEANUP: Successfully removed " + expiredSessions.size() + " expired test sessions.");
         }
     }
 }
