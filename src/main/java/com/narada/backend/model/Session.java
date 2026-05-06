@@ -1,13 +1,14 @@
 package com.narada.backend.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,4 +20,15 @@ public class Session {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "session_devices", joinColumns = @JoinColumn(name = "session_id"))
+    @Column(name = "device_id")
+    private Set<String> devices = new HashSet<>();
+
+    public Session(String sessionId, LocalDateTime createdAt) {
+        this.sessionId = sessionId;
+        this.createdAt = createdAt;
+        this.devices = new HashSet<>();
+    }
 }

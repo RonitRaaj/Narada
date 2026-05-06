@@ -5,6 +5,9 @@ import com.narada.backend.model.Session;
 import com.narada.backend.repository.SessionRepository;
 import com.narada.backend.service.ClipboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -18,21 +21,39 @@ import java.util.UUID;
 public class ClipboardController {
     private final ClipboardService service;
     private final SessionRepository sessionRepo;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/session")
-    public String createSession(){
-        String sessionId = UUID.randomUUID().toString().substring(0,6);
+    public String createSession() {
+        String sessionId = UUID.randomUUID().toString().substring(0, 6);
         sessionRepo.save(new Session(sessionId, LocalDateTime.now()));
         return sessionId;
     }
 
     @PostMapping("/clipboard")
-    public ClipboardItem addItem(@RequestBody ClipboardItem item){
-        return service.save(item);
+    public ResponseEntity<?> addItem(@RequestBody ClipboardItem item) {
+        try {
+            ClipboardItem saved = service.save(item);
+
+            messagingTemplate.convertAndSend(
+                    "/topic/clipboard/" + saved.getSessionId(), saved
+            );
+
+            return ResponseEntity.ok(saved);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
     }
 
     @GetMapping("/clipboard/{sessionId}")
-    public List<ClipboardItem> getItems(@PathVariable String sessionId){
-        return service.getBySession(sessionId);
+    public ResponseEntity<?> getItems(@PathVariable String sessionId) {
+        try {
+            List<ClipboardItem> items = service.getBySession(sessionId);
+            return ResponseEntity.ok(items);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 }
