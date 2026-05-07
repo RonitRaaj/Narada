@@ -1,11 +1,13 @@
 package com.narada.backend.controller;
 
-import com.narada.backend.model.ClipboardItem;
+import com.narada.backend.dTO.ClipboardRequestDTO;
+import com.narada.backend.dTO.ClipboardResponseDTO;
 import com.narada.backend.model.Session;
 import com.narada.backend.repository.SessionRepository;
 import com.narada.backend.service.ClipboardService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -31,29 +33,21 @@ public class ClipboardController {
     }
 
     @PostMapping("/clipboard")
-    public ResponseEntity<?> addItem(@RequestBody ClipboardItem item) {
-        try {
-            ClipboardItem saved = service.save(item);
+    public ResponseEntity<?> addItem(@Valid @RequestBody ClipboardRequestDTO request) {
+
+        ClipboardResponseDTO saved = service.save(request);
 
             messagingTemplate.convertAndSend(
                     "/topic/clipboard/" + saved.getSessionId(), saved
             );
 
-            return ResponseEntity.ok(saved);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        }
+        return ResponseEntity.ok(saved); 
     }
 
     @GetMapping("/clipboard/{sessionId}")
     public ResponseEntity<?> getItems(@PathVariable String sessionId) {
-        try {
-            List<ClipboardItem> items = service.getBySession(sessionId);
-            return ResponseEntity.ok(items);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+
+        List<ClipboardResponseDTO> items = service.getBySession(sessionId);
+        return ResponseEntity.ok(items);
     }
 }
