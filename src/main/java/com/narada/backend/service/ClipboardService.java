@@ -31,7 +31,7 @@ public class ClipboardService {
         item.setContent(request.getContent());
         item.setSessionId(request.getSessionId());
         item.setDeviceId(request.getDeviceId());
-        item.setType(request.getType());
+        item.setContentType(request.getType());
 
         Session session = sessionRepository.findById(item.getSessionId())
                 .orElseThrow(() -> new IllegalArgumentException("Session not found."));
@@ -53,6 +53,7 @@ public class ClipboardService {
             .content(item.getContent())
             .deviceId(item.getDeviceId())
             .createdAt(item.getCreatedAt())
+            .contentType(item.getContentType())
             .build();
     }
 
@@ -68,6 +69,7 @@ public class ClipboardService {
                 .content(item.getContent())
                 .deviceId(item.getDeviceId())
                 .createdAt(item.getCreatedAt())
+                .contentType(item.getContentType())
                 .build())
         .collect(Collectors.toList());
     }

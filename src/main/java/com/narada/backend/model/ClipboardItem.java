@@ -22,7 +22,8 @@ public class ClipboardItem {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    private String type;
+    @Column(columnDefinition = "TEXT")
+    private String contentType;
 
     private String deviceId;
 

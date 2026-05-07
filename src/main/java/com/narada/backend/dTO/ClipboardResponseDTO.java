@@ -15,5 +15,6 @@ public class ClipboardResponseDTO {
     private String sessionId;
     private String content;
     private String deviceId;
+    private String contentType;
     private LocalDateTime createdAt;
 }
