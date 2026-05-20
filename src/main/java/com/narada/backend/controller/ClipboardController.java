@@ -1,53 +1,42 @@
 package com.narada.backend.controller;
 
-import com.narada.backend.dTO.ClipboardRequestDTO;
-import com.narada.backend.dTO.ClipboardResponseDTO;
-import com.narada.backend.model.Session;
-import com.narada.backend.repository.SessionRepository;
+import com.narada.backend.dTO.*;
+import com.narada.backend.dTO.sessiondTO.*;
+import com.narada.backend.service.AuthService;
 import com.narada.backend.service.ClipboardService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/clipboard")
 @RequiredArgsConstructor
-@CrossOrigin
-public class ClipboardController {
-    private final ClipboardService service;
-    private final SessionRepository sessionRepo;
-    private final SimpMessagingTemplate messagingTemplate;
+public class ClipboardController{
 
-    @PostMapping("/session")
-    public String createSession() {
-        String sessionId = UUID.randomUUID().toString().substring(0, 6);
-        sessionRepo.save(new Session(sessionId, LocalDateTime.now()));
-        return sessionId;
+    private final ClipboardService clipboardService;
+    private final AuthService authService;
+
+    @PostMapping("/add")
+    public ResponseEntity<ClipboardResponseDTO> addClip(
+            @RequestHeader("X-Session-Token") String token,
+            @Valid @RequestBody ClipboardRequestDTO request) {
+        
+        EnterSessionDTO sessionContext = authService.getSessionDataFromToken(token);
+        
+        ClipboardResponseDTO response = clipboardService.saveItem(request, sessionContext);
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/clipboard")
-    public ResponseEntity<?> addItem(@Valid @RequestBody ClipboardRequestDTO request) {
-
-        ClipboardResponseDTO saved = service.save(request);
-
-            messagingTemplate.convertAndSend(
-                    "/topic/clipboard/" + saved.getSessionId(), saved
-            );
-
-        return ResponseEntity.ok(saved); 
-    }
-
-    @GetMapping("/clipboard/{sessionId}")
-    public ResponseEntity<?> getItems(@PathVariable String sessionId) {
-
-        List<ClipboardResponseDTO> items = service.getBySession(sessionId);
-        return ResponseEntity.ok(items);
+    @GetMapping("/history")
+    public ResponseEntity<List<ClipboardResponseDTO>> getHistory(
+            @RequestHeader("X-Session-Token") String token) {
+        
+        EnterSessionDTO sessionContext = authService.getSessionDataFromToken(token);
+        
+        List<ClipboardResponseDTO> history = clipboardService.getSessionHistory(sessionContext.getSessionId());
+        return ResponseEntity.ok(history);
     }
 }
