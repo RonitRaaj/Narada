@@ -14,21 +14,25 @@ import java.util.Set;
 @AllArgsConstructor
 @Data
 @Entity
+@Table(name = "sessions")
 public class Session {
+    
     @Id
+    @Column(name = "session_id", length = 6)
     private String sessionId;
 
     @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "session_devices", joinColumns = @JoinColumn(name = "session_id"))
-    @Column(name = "device_id")
-    private Set<String> devices = new HashSet<>();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "device_type")
+    private Set<DeviceType> devices = new HashSet<>();
 
-    public Session(String sessionId, LocalDateTime createdAt) {
+    public Session(String sessionId) {
         this.sessionId = sessionId;
-        this.createdAt = createdAt;
         this.devices = new HashSet<>();
     }
 }

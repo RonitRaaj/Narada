@@ -2,7 +2,9 @@ package com.narada.backend.controller;
 
 import com.narada.backend.dTO.ClipboardRequestDTO;
 import com.narada.backend.dTO.ClipboardResponseDTO;
+import com.narada.backend.dTO.sessiondTO.EnterSessionDTO;
 import com.narada.backend.service.ClipboardService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -15,11 +17,11 @@ public class WebSocketController {
     private final ClipboardService clipboardService;
 
     @MessageMapping("/clipboard")
-    public void sendClipboard(ClipboardRequestDTO requestDTO){
-        ClipboardResponseDTO saved = clipboardService.save(requestDTO);
+    public void sendClipboard(ClipboardRequestDTO requestDTO , EnterSessionDTO sessionDTO){
+        ClipboardResponseDTO saved = clipboardService.saveItem(requestDTO, sessionDTO);
 
         messagingTemplate.convertAndSend(
-                "/topic/clipboard/" + requestDTO.getSessionId(), saved
+                "/topic/clipboard/" + saved
         );
     }
 }
