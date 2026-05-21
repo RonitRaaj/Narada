@@ -45,7 +45,7 @@ public class ClipboardService {
 
     @Transactional(readOnly = true)
     public List<ClipboardResponseDTO> getSessionHistory(String sessionId) {
-        return clipboardItemRepository.findBySessionIdOrderByCreatedAtDesc(sessionId)
+        return clipboardItemRepository.findBySession_SessionIdOrderByCreatedAtDesc(sessionId)
                 .stream()
                 .map(item -> new ClipboardResponseDTO(
                         item.getId(),

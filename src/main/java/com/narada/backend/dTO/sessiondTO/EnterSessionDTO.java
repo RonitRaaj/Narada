@@ -5,9 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class EnterSessionDTO {
 
     @NotBlank(message = "Session ID cannot be empty")
@@ -15,6 +19,5 @@ public class EnterSessionDTO {
     private String sessionId;
     
     @NotNull(message = "Device Type must be selected")
-    @Pattern(regexp = "^(?i)(MOBILE|TABLET|LAPTOP|DESKTOP|SMART_TV)$")
     private DeviceType deviceType;
 }
