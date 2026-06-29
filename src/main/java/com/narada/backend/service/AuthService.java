@@ -17,7 +17,7 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final long EXPIRATION_TIME = 86400000; // 24 Hours
+    private final long EXPIRATION_TIME = 86400000; 
     private final String SECRET_STRING = "your-ultra-secret-key-that-must-be-at-least-256-bits-long-narada-clipboard";
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
 
@@ -37,6 +37,16 @@ public class AuthService {
     }
 
     public EnterSessionDTO getSessionDataFromToken(String token) {
+
+        if (token == null || token.trim().isEmpty()) {
+            throw new IllegalArgumentException("Token cannot be null or empty");
+        }
+
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        token = token.trim();
 
         Claims claims = Jwts.parser()
                 .verifyWith(key)
